@@ -9,7 +9,7 @@ services:
       npm install &&
       npm run build --workspace=domain &&
       npm run build --workspace=backend &&
-      npm --prefix backend exec -- prisma migrate deploy
+      npm run prisma:migrate --workspace=backend
     startCommand: node backend/dist/server.js
     healthCheckPath: /health
     envVars:
