@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AttendanceDay {
+  date      String   @id // ISO date, e.g. "2026-09-08"
+  status    String   // "OFFICE" | "ABSENT"
+  updatedAt DateTime @updatedAt
+
+  @@map("attendance_day")
+}
+
+model BlockedDate {
+  date      String   @id // future ISO date the user cannot attend
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@map("blocked_date")
+}
+
+model Holiday {
+  date String  @id // ISO date, non-working regardless of weekday
+  name String?
+
+  @@map("holiday")
+}
+
+// Singleton row (id always 1) holding the few policy/config knobs that aren't raw dates.
+model Settings {
+  id                  Int     @id @default(1)
+  employmentStartDate String? // ISO date; weeks before this are excluded from the window
+  safetyBufferDays    Int     @default(2)
+  workDays            String  @default("1,2,3,4,5") // 0=Sun..6=Sat
+
+  @@map("settings")
+}

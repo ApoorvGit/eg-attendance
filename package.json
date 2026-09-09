@@ -1,0 +1,14 @@
+{
+  "name": "eg-attendance",
+  "private": true,
+  "workspaces": [
+    "domain",
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=domain && npm run build --workspace=backend",
+    "test": "npm test --workspace=domain",
+    "dev:backend": "npm run build --workspace=domain && npm run dev --workspace=backend"
+  }
+}
