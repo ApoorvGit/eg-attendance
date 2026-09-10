@@ -7,9 +7,13 @@ import { formatShort } from '@/lib/dates';
 export function StatusHero({
   compliance,
   suggestion,
+  syncing,
 }: {
   compliance: ComplianceWindow;
   suggestion: SuggestionResult;
+  /** A tap has been applied locally but the server hasn't recomputed yet, so the
+   * numbers below are one edit behind. Said out loud rather than shown as settled. */
+  syncing?: boolean;
 }) {
   const { compliant, margin, top8Sum, required } = compliance;
   const short = Math.abs(margin);
@@ -51,8 +55,12 @@ export function StatusHero({
               </>
             )}
           </p>
-          <p className="mt-1 text-xs text-muted-foreground/80">
-            {top8Sum} of {required} days counted
+          <p
+            className="mt-1 text-xs text-muted-foreground/80"
+            aria-live="polite"
+            aria-busy={syncing}
+          >
+            {syncing ? 'rechecking…' : `${top8Sum} of ${required} days counted`}
           </p>
         </div>
       </div>

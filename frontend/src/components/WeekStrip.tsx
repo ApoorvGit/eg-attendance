@@ -36,11 +36,9 @@ function actionHint(day: DayCell): string {
 export function WeekStrip({
   week,
   onDayTap,
-  busy,
 }: {
   week: WeekView;
   onDayTap: (day: DayCell) => void;
-  busy: boolean;
 }) {
   return (
     <section className="mb-6">
@@ -69,11 +67,10 @@ export function WeekStrip({
             <button
               key={day.date}
               type="button"
-              disabled={busy}
               onClick={() => onDayTap(day)}
               title={`${weekdayShort(day.date)} ${dayNum} — ${KIND_LABEL[day.kind]}. Tap to ${actionHint(day)}.`}
               aria-label={`${weekdayShort(day.date)} ${dayNum}, currently ${KIND_LABEL[day.kind]}. Tap to ${actionHint(day)}.`}
-              className={`flex min-h-[68px] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-lg border transition-colors duration-200 hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground disabled:cursor-wait disabled:opacity-60 dark:hover:brightness-125 ${
+              className={`flex min-h-[68px] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-lg border transition-colors duration-200 hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground dark:hover:brightness-125 ${
                 CELL_STYLE[day.kind]
               } ${day.isToday ? 'ring-2 ring-foreground ring-offset-2 ring-offset-background' : ''}`}
             >

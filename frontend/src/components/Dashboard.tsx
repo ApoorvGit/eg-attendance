@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   api,
   ApiError,
@@ -20,7 +20,9 @@ import { HistoryStrip } from './HistoryStrip';
 import { SettingsSheet } from './SettingsSheet';
 import { GearIcon } from './Icons';
 
-const PAST_WEEKS = 4; // recent weeks you can still log
+/** The compliance window is the 12 completed weeks before this one, so every one of
+ * them must be reachable for logging -- otherwise history can't be backfilled or corrected. */
+const PAST_WEEKS = 12;
 /** Weeks of future shown, so trips months out can be blocked by tapping. Must stay at
  * least 12 below the planner's internal horizon (36) or the tail weeks aren't yet
  * fully constrained -- see SuggestOptions.horizonWeeksAhead. */
@@ -85,19 +87,71 @@ export function Dashboard() {
     [refresh, handleFailure],
   );
 
+  /** Day taps apply locally first and revalidate afterwards, so backfilling a whole
+   * quarter of history stays responsive instead of blocking on a round trip per cell.
+   * Concurrent taps are counted, and the last one to settle triggers a single refresh --
+   * the server stays the source of truth for the compliance numbers, which is why the
+   * header shows a "checking" state until it has confirmed. */
+  const inflight = useRef(0);
+  const [syncing, setSyncing] = useState(false);
+
+  const optimistic = useCallback(
+    async (apply: () => void, call: () => Promise<unknown>) => {
+      apply();
+      inflight.current += 1;
+      setSyncing(true);
+      try {
+        await call();
+      } catch (e) {
+        handleFailure(e);
+      } finally {
+        inflight.current -= 1;
+        if (inflight.current === 0) {
+          await refresh();
+          setSyncing(false);
+        }
+      }
+    },
+    [refresh, handleFailure],
+  );
+
+  const setLocalAttendance = (date: string, status: 'OFFICE' | 'ABSENT' | null) =>
+    setAttendance((rows) => {
+      const rest = rows.filter((r) => r.date !== date);
+      return status ? [...rest, { date, status }] : rest;
+    });
+
   /** One tap, one meaning: past days record what happened, future days record
    * whether you can go. Never both on the same cell. */
   const onDayTap = useCallback(
     (day: DayCell) => {
       if (day.isLoggable) {
-        if (day.kind === 'unlogged') return mutate(() => api.setAttendance(day.date, 'OFFICE'));
-        if (day.kind === 'office') return mutate(() => api.setAttendance(day.date, 'ABSENT'));
-        return mutate(() => api.clearAttendance(day.date));
+        if (day.kind === 'unlogged')
+          return optimistic(
+            () => setLocalAttendance(day.date, 'OFFICE'),
+            () => api.setAttendance(day.date, 'OFFICE'),
+          );
+        if (day.kind === 'office')
+          return optimistic(
+            () => setLocalAttendance(day.date, 'ABSENT'),
+            () => api.setAttendance(day.date, 'ABSENT'),
+          );
+        return optimistic(
+          () => setLocalAttendance(day.date, null),
+          () => api.clearAttendance(day.date),
+        );
       }
-      if (day.kind === 'blocked') return mutate(() => api.clearBlockedDate(day.date));
-      return mutate(() => api.setBlockedDate(day.date));
+      if (day.kind === 'blocked')
+        return optimistic(
+          () => setBlocked((rows) => rows.filter((r) => r.date !== day.date)),
+          () => api.clearBlockedDate(day.date),
+        );
+      return optimistic(
+        () => setBlocked((rows) => [...rows, { date: day.date, reason: null }]),
+        () => api.setBlockedDate(day.date),
+      );
     },
-    [mutate],
+    [optimistic],
   );
 
   const ctx: DayContext | null = useMemo(() => {
@@ -156,10 +210,14 @@ export function Dashboard() {
 
   return (
     <main className="mx-auto max-w-lg px-6 py-10">
-      <StatusHero compliance={overview.compliance} suggestion={overview.suggestion} />
+      <StatusHero
+        compliance={overview.compliance}
+        suggestion={overview.suggestion}
+        syncing={syncing}
+      />
 
-      <WeekStrip week={weeks.current} onDayTap={onDayTap} busy={busy} />
-      <WeekStrip week={weeks.next} onDayTap={onDayTap} busy={busy} />
+      <WeekStrip week={weeks.current} onDayTap={onDayTap} />
+      <WeekStrip week={weeks.next} onDayTap={onDayTap} />
 
       <p className="mb-6 text-xs text-muted-foreground">
         Tap any day to change it. Past days record whether you went in; future days let you mark
@@ -171,7 +229,7 @@ export function Dashboard() {
         hint={laterGoIn > 0 ? `${laterGoIn} more days planned` : 'nothing planned'}
       >
         {weeks.later.map((w) => (
-          <WeekStrip key={w.mondayISO} week={w} onDayTap={onDayTap} busy={busy} />
+          <WeekStrip key={w.mondayISO} week={w} onDayTap={onDayTap} />
         ))}
       </Disclosure>
 
@@ -180,7 +238,7 @@ export function Dashboard() {
         hint={unloggedEarlier > 0 ? `${unloggedEarlier} days not logged` : 'all logged'}
       >
         {weeks.earlier.map((w) => (
-          <WeekStrip key={w.mondayISO} week={w} onDayTap={onDayTap} busy={busy} />
+          <WeekStrip key={w.mondayISO} week={w} onDayTap={onDayTap} />
         ))}
       </Disclosure>
 
