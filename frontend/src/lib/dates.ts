@@ -17,6 +17,14 @@ export function addDaysISO(iso: string, n: number): string {
   return toLocalISO(date);
 }
 
+/** Monday of the ISO week containing `iso`. */
+export function mondayOfISO(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const offsetFromMonday = (date.getDay() + 6) % 7; // Mon=0 .. Sun=6
+  return addDaysISO(iso, -offsetFromMonday);
+}
+
 export function weekdayShort(iso: string): string {
   const [y, m, d] = iso.split('-').map(Number);
   return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'short' });

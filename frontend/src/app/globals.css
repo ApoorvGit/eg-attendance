@@ -1,26 +1,98 @@
 @import "tailwindcss";
 
+/* Semantic tokens. Light values here, dark overrides below via prefers-color-scheme.
+   Every pair is checked for >= 4.5:1 text contrast in both themes. */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --muted: #f4f4f5;
+  --muted-foreground: #52525b;
+  --border: #e4e4e7;
+
+  /* "go in" = the one thing you must act on. Uses maximum contrast rather than
+     hue, so it reads as the loudest element in either theme and stays
+     colour-blind safe (it also carries an icon + text label). */
+  --action: #18181b;
+  --action-foreground: #ffffff;
+
+  /* went in / confirmed */
+  --ok: #166534;
+  --ok-surface: #dcfce7;
+  --ok-border: #86efac;
+
+  /* needs your input */
+  --warn: #92400e;
+  --warn-surface: #fffbeb;
+  --warn-border: #fcd34d;
+
+  /* out of office / blocked / problem */
+  --danger: #b91c1c;
+  --danger-surface: #fef2f2;
+  --danger-border: #fca5a5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #09090b;
+    --foreground: #fafafa;
+    --card: #121214;
+    --muted: #27272a;
+    --muted-foreground: #a1a1aa;
+    --border: #3f3f46;
+
+    --action: #fafafa;
+    --action-foreground: #09090b;
+
+    --ok: #86efac;
+    --ok-surface: #052e16;
+    --ok-border: #166534;
+
+    --warn: #fcd34d;
+    --warn-surface: #291a04;
+    --warn-border: #92400e;
+
+    --danger: #fca5a5;
+    --danger-surface: #300c0c;
+    --danger-border: #991b1b;
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-action: var(--action);
+  --color-action-foreground: var(--action-foreground);
+  --color-ok: var(--ok);
+  --color-ok-surface: var(--ok-surface);
+  --color-ok-border: var(--ok-border);
+  --color-warn: var(--warn);
+  --color-warn-surface: var(--warn-surface);
+  --color-warn-border: var(--warn-border);
+  --color-danger: var(--danger);
+  --color-danger-surface: var(--danger-surface);
+  --color-danger-border: var(--danger-border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Honour the OS reduced-motion preference for every transition/animation. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

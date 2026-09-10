@@ -17,10 +17,10 @@ export function AccessGate({ children }: { children: React.ReactNode }) {
 
   if (!hasCode) {
     return (
-      <div className="mx-auto mt-24 max-w-sm px-4">
-        <h1 className="mb-2 text-lg font-semibold">Attendance Planner</h1>
-        <p className="mb-4 text-sm text-neutral-500">
-          Enter your access code (the same secret configured on the backend).
+      <main className="mx-auto max-w-sm px-6 py-24">
+        <h1 className="text-xl font-semibold tracking-tight">Attendance</h1>
+        <p className="mt-1 mb-6 text-sm text-muted-foreground">
+          Enter your access code to continue.
         </p>
         <form
           onSubmit={(e) => {
@@ -29,24 +29,27 @@ export function AccessGate({ children }: { children: React.ReactNode }) {
             setAccessCode(input.trim());
             setHasCode(true);
           }}
-          className="flex gap-2"
         >
+          <label htmlFor="code" className="text-sm font-medium">
+            Access code
+          </label>
           <input
+            id="code"
             type="password"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Access code"
-            className="flex-1 rounded border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-500"
             autoFocus
+            autoComplete="current-password"
+            className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
           />
           <button
             type="submit"
-            className="rounded bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+            className="mt-3 w-full cursor-pointer rounded-md bg-action px-4 py-2.5 text-sm font-medium text-action-foreground transition-opacity duration-200 hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
           >
-            Enter
+            Continue
           </button>
         </form>
-      </div>
+      </main>
     );
   }
 

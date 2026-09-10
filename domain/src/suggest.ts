@@ -10,7 +10,15 @@ export interface SuggestOptions {
    * immediately create a deficit. Purely a planning cushion -- computeCompliance() still
    * reports true compliance against the real policy threshold, unaffected by this. */
   safetyBufferDays?: number; // default 2
-  horizonWeeksAhead?: number; // default 16 -- how many future evaluation points to plan for
+  /**
+   * How many future evaluation points to plan for. This must exceed the number of weeks
+   * you actually show the user by at least `windowWeeks`, because week i is only fully
+   * constrained once every window containing it (t = i+1 .. i+windowWeeks) has been
+   * checked. Plan too short and the tail weeks are under-filled -- which also destabilises
+   * the near-term advice, since the greedy's early choices depend on later windows.
+   * Default 36 leaves ~24 weeks of trustworthy plan; measured to converge from 24 up.
+   */
+  horizonWeeksAhead?: number;
   maxIterations?: number; // safety guard, default 5000
 }
 
@@ -40,7 +48,7 @@ export function suggestOfficeDays(
   const topK = options.topK ?? 8;
   const required = options.requiredDays ?? 24;
   const planningTarget = required + (options.safetyBufferDays ?? 2);
-  const horizonWeeksAhead = options.horizonWeeksAhead ?? 16;
+  const horizonWeeksAhead = options.horizonWeeksAhead ?? 36;
   const maxIterations = options.maxIterations ?? 5000;
 
   const currentWeekIndex = weekIndexOf(parseISO(input.today));

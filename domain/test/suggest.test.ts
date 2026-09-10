@@ -45,12 +45,14 @@ const FULLY_CONTROLLABLE_T = CURRENT_WEEK + 12;
 
 describe('suggestOfficeDays', () => {
   it('suggests 0 extra days when already compliant across the whole horizon', () => {
+    const horizonWeeksAhead = 16;
     const records: DayRecord[] = [];
     for (let i = 1; i <= 12; i++) records.push(...weekRecords(CURRENT_WEEK - i, 5));
-    // Also pre-fill future weeks so nothing ever needs topping up within the horizon.
-    for (let i = 0; i < 16; i++) records.push(...weekRecords(CURRENT_WEEK + i, 5));
+    // Pre-fill every week the planner will look at, so nothing needs topping up. Must cover
+    // the full horizon, not just the weeks a UI would show -- hence pinning it explicitly.
+    for (let i = 0; i < horizonWeeksAhead; i++) records.push(...weekRecords(CURRENT_WEEK + i, 5));
     const input: AttendanceInput = { today: TODAY, records, blockedDates: [], holidays: [] };
-    const result = suggestOfficeDays(input);
+    const result = suggestOfficeDays(input, { horizonWeeksAhead });
     expect(result.totalAddedDays).toBe(0);
     expect(result.feasible).toBe(true);
   });
@@ -131,6 +133,27 @@ describe('suggestOfficeDays', () => {
     // The one thing that must hold across a re-plan: it never suggests the date the user
     // just said they can't do, and it still finds a sufficient (verified above) plan.
     expect(secondPlan.suggestedDates).not.toContain(missedDate);
+  });
+
+  it('gives near-term advice that does not depend on how far ahead it looks', () => {
+    // A week is only fully constrained once every window containing it has been checked,
+    // so a short horizon under-fills the tail AND destabilises the early weeks (the greedy's
+    // early choices depend on later windows). Regression guard: the weeks we'd actually show
+    // the user must be identical at the default horizon and well beyond it.
+    const records: DayRecord[] = [];
+    for (let i = 1; i <= 12; i++) records.push(...weekRecords(CURRENT_WEEK - i, 3));
+    const input: AttendanceInput = { today: TODAY, records, blockedDates: [], holidays: [] };
+
+    const shownWeeks = 10;
+    const shapeAt = (horizonWeeksAhead: number) =>
+      suggestOfficeDays(input, { horizonWeeksAhead })
+        .weeklyPlan.slice(0, shownWeeks)
+        .map((w) => w.totalDays)
+        .join(',');
+
+    const baseline = shapeAt(36); // the default
+    expect(shapeAt(44)).toBe(baseline);
+    expect(shapeAt(52)).toBe(baseline);
   });
 
   it('plans to a safety cushion above the bare policy minimum when capacity allows', () => {
