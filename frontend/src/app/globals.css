@@ -31,14 +31,9 @@
   --danger-surface: #fef2f2;
   --danger-border: #fca5a5;
 
-  /* Soft indigo/teal wash across the top, resolving to near-plain before the day cells.
-     Kept low-opacity on purpose: the cells must stay the highest-contrast thing on the
-     page, and body text sits directly on this (measured >= 6.7:1 at every stop). */
-  --page-gradient:
-    radial-gradient(900px 500px at 12% -8%, rgba(99, 102, 241, 0.16), transparent 60%),
-    radial-gradient(760px 460px at 92% 4%, rgba(20, 184, 166, 0.14), transparent 62%),
-    radial-gradient(680px 520px at 50% 108%, rgba(244, 114, 182, 0.1), transparent 60%),
-    linear-gradient(180deg, #fdfdff, #f6f7fc);
+  /* Light mode stays flat white -- the wash read as washed-out rather than rich against
+     light surfaces. Dark mode overrides this below, where it actually earns its place. */
+  --page-gradient: none;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -65,6 +60,9 @@
     --danger-surface: #300c0c;
     --danger-border: #991b1b;
 
+    /* Soft indigo/teal wash across the top, resolving to near-plain before the day cells:
+       they must stay the highest-contrast thing on the page. Body text sits directly on
+       this, measured >= 6.9:1 at every stop. */
     --page-gradient:
       radial-gradient(900px 500px at 12% -8%, rgba(99, 102, 241, 0.2), transparent 60%),
       radial-gradient(760px 460px at 92% 4%, rgba(20, 184, 166, 0.14), transparent 62%),
