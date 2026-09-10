@@ -33,8 +33,15 @@ npm --prefix frontend run dev
 
 1. Create a project at [neon.tech](https://neon.tech). Any region close to your Render
    region is fine.
-2. Copy the pooled connection string (starts `postgresql://...`, includes
-   `?sslmode=require`). This becomes `DATABASE_URL`.
+2. Copy **both** connection strings from Connection Details:
+   - the **pooled** one (hostname contains `-pooler`) → `DATABASE_URL`, used for runtime queries
+   - the **direct** one (same string, no `-pooler`) → `DIRECT_URL`, used only by Prisma Migrate
+
+   Both are required. Migrations take a session-level `pg_advisory_lock`, and Neon's pooler
+   runs in transaction mode -- it hands out a different backend connection per transaction, so
+   the lock can never be held and `prisma migrate deploy` fails with `P1002` after 10s. Prisma
+   routes migrations through `directUrl` for exactly this reason. `prisma generate` also errors
+   if `DIRECT_URL` is unset.
 
 ### 2. Backend -- Render
 
@@ -43,7 +50,8 @@ Using the included `render.yaml` (Blueprint):
 1. In the Render dashboard: **New > Blueprint**, point it at this GitHub repo.
 2. Render reads `render.yaml` and creates the `eg-attendance-backend` web service.
 3. Fill in the three secret env vars it leaves blank:
-   - `DATABASE_URL` -- the Neon connection string from step 1
+   - `DATABASE_URL` -- the **pooled** Neon connection string from step 1
+   - `DIRECT_URL` -- the **direct** (no `-pooler`) string from step 1
    - `APP_SECRET` -- a long random string (this is your app's password; generate one
      with `openssl rand -hex 32`)
    - `FRONTEND_ORIGIN` -- your Vercel URL once you have it (comma-separate if you add a

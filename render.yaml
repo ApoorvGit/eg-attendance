@@ -17,6 +17,10 @@ services:
         value: 20.9.0
       - key: DATABASE_URL
         sync: false
+      # Same database, without `-pooler` in the hostname. Prisma Migrate needs a real
+      # session (advisory lock), which a transaction-mode pooler cannot give it.
+      - key: DIRECT_URL
+        sync: false
       - key: APP_SECRET
         sync: false
       - key: FRONTEND_ORIGIN

@@ -4,7 +4,13 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // Runtime queries go through the pooled endpoint.
   url      = env("DATABASE_URL")
+  // Migrations must NOT: they take a session-level pg_advisory_lock, and a transaction-mode
+  // pooler (Neon's `-pooler` host) hands out a different backend connection per transaction,
+  // so the lock can never be held and `migrate deploy` fails with P1002. Point this at the
+  // same database WITHOUT `-pooler` in the hostname.
+  directUrl = env("DIRECT_URL")
 }
 
 model AttendanceDay {
