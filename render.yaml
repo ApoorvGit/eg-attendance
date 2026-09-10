@@ -15,11 +15,9 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20.9.0
+      # Must be Neon's DIRECT connection string (no `-pooler` in the hostname) -- the
+      # pooler cannot hold the session advisory lock that `migrate deploy` requires.
       - key: DATABASE_URL
-        sync: false
-      # Same database, without `-pooler` in the hostname. Prisma Migrate needs a real
-      # session (advisory lock), which a transaction-mode pooler cannot give it.
-      - key: DIRECT_URL
         sync: false
       - key: APP_SECRET
         sync: false
