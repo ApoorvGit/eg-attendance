@@ -93,11 +93,36 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html {
+  /* No rubber-band / pull-to-refresh bounce at the ends of the page. */
+  overscroll-behavior: none;
+  /* Don't let iOS inflate text on rotation. */
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   background: var(--page-gradient), var(--background);
   /* Fixed so the wash stays put instead of tiling down a long page of week strips. */
   background-attachment: fixed;
   color: var(--foreground);
+  /* Respect the notch and home bar when launched from the home screen. Paired with
+     viewportFit: 'cover' in layout.tsx -- without that these insets are always 0. */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+/* Native-feeling taps. Scoped to controls so real prose stays selectable and zoomable. */
+button,
+[role='button'],
+label {
+  /* Removes the ~300ms double-tap-to-zoom delay and the zoom jump on rapid taps, which
+     matters most for the day cells you tap repeatedly while backfilling. */
+  touch-action: manipulation;
+  /* No grey/blue flash over a tapped element; the hover/active styles already respond. */
+  -webkit-tap-highlight-color: transparent;
+  /* Long-pressing a day cell shouldn't start selecting its text like a web page. */
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* Honour the OS reduced-motion preference for every transition/animation. */

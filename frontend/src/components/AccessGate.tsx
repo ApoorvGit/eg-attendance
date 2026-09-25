@@ -40,7 +40,8 @@ export function AccessGate({ children }: { children: React.ReactNode }) {
             onChange={(e) => setInput(e.target.value)}
             autoFocus
             autoComplete="current-password"
-            className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+            /* text-base (16px): below that, iOS Safari auto-zooms on focus and stays zoomed. */
+            className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-base transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
           />
           <button
             type="submit"

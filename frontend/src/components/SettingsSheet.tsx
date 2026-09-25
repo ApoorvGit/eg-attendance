@@ -24,8 +24,10 @@ export function SettingsSheet({
   const [start, setStart] = useState(settings.employmentStartDate ?? '');
   const dirty = buffer !== settings.safetyBufferDays || start !== (settings.employmentStartDate ?? '');
 
+  // text-base (16px) is deliberate, not a style choice: iOS Safari auto-zooms the page when
+  // you focus an input whose font-size is under 16px, and leaves you zoomed in.
   const field =
-    'mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground';
+    'mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-base transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground';
 
   return (
     <div className="space-y-4">
