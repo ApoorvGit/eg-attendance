@@ -250,6 +250,9 @@ export function Dashboard() {
         <SettingsSheet
           settings={settings}
           busy={busy}
+          planTotalDays={weeks.current.goInCount + weeks.next.goInCount + laterGoIn}
+          planWeeks={FUTURE_WEEKS}
+          cushionUnreachable={overview.suggestion.bufferShortWindows.length > 0}
           onSave={(patch) => mutate(() => api.patchSettings(patch))}
         />
       </Disclosure>

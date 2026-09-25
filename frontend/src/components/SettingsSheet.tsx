@@ -7,10 +7,18 @@ export function SettingsSheet({
   settings,
   onSave,
   busy,
+  planTotalDays,
+  planWeeks,
+  cushionUnreachable,
 }: {
   settings: SettingsPayload;
   onSave: (patch: Partial<SettingsPayload>) => void;
   busy: boolean;
+  /** Office days the current plan asks for, so a saved change visibly moves a number
+   * right next to the control instead of only inside a collapsed panel further down. */
+  planTotalDays: number;
+  planWeeks: number;
+  cushionUnreachable: boolean;
 }) {
   const [buffer, setBuffer] = useState(settings.safetyBufferDays);
   const [start, setStart] = useState(settings.employmentStartDate ?? '');
@@ -29,6 +37,19 @@ export function SettingsSheet({
           Extra days planned above the required 24, so one missed day doesn&apos;t break
           compliance.
         </p>
+        <p className="mt-1 text-xs text-muted-foreground" aria-live="polite">
+          Current plan:{' '}
+          <strong className="font-medium text-foreground">
+            {planTotalDays} office day{planTotalDays === 1 ? '' : 's'}
+          </strong>{' '}
+          over the next {planWeeks} weeks.
+        </p>
+        {cushionUnreachable && (
+          <p className="mt-1 text-xs text-warn">
+            Some upcoming weeks are already at their maximum, so raising this only adds days
+            further out — the next couple of weeks won&apos;t change.
+          </p>
+        )}
         <input
           id="buffer"
           type="number"

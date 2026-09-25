@@ -156,6 +156,21 @@ describe('suggestOfficeDays', () => {
     expect(shapeAt(52)).toBe(baseline);
   });
 
+  it('reports the windows where the safety cushion is unreachable', () => {
+    // Sparse history + a big cushion: the near-term weeks saturate at 5 days and cannot
+    // absorb more, so raising the buffer genuinely changes nothing for them. That has to be
+    // reported -- otherwise the setting silently appears to do nothing.
+    const records: DayRecord[] = [];
+    for (let i = 1; i <= 3; i++) records.push(...weekRecords(CURRENT_WEEK - i, 2));
+    const input: AttendanceInput = { today: TODAY, records, blockedDates: [], holidays: [] };
+
+    const result = suggestOfficeDays(input, { safetyBufferDays: 10 });
+    expect(result.planningTarget).toBe(34);
+    expect(result.bufferShortWindows.length).toBeGreaterThan(0);
+    // and it must still be distinguishable from windows that miss the real requirement
+    expect(result.bufferShortWindows).not.toEqual(result.unresolvedWindows);
+  });
+
   it('plans to a safety cushion above the bare policy minimum when capacity allows', () => {
     const input: AttendanceInput = { today: TODAY, records: [], blockedDates: [], holidays: [] };
     const result = suggestOfficeDays(input, { safetyBufferDays: 2 });

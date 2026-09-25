@@ -61,6 +61,15 @@ export interface SuggestionResult {
   feasible: boolean;
   /** Any window that remains non-compliant even after using every available open date. */
   unresolvedWindows: ISODate[];
+  /**
+   * Windows that reach the real requirement but run out of open days before reaching the
+   * safety cushion -- i.e. raising the buffer cannot help them, because the weeks involved
+   * are already at capacity. Surfacing this matters: otherwise increasing the buffer looks
+   * like it does nothing.
+   */
+  bufferShortWindows: ISODate[];
+  /** The target actually planned to: requiredDays + safetyBufferDays. */
+  planningTarget: number;
   totalAddedDays: number;
   warnings: string[];
 }

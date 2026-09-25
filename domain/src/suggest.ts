@@ -159,6 +159,10 @@ export function suggestOfficeDays(
     unresolvedWindows: [...unresolved]
       .sort((a, b) => a - b)
       .map((t) => formatISO(mondayOfWeekIndex(t))),
+    bufferShortWindows: [...bufferShort]
+      .sort((a, b) => a - b)
+      .map((t) => formatISO(mondayOfWeekIndex(t))),
+    planningTarget,
     totalAddedDays: suggestedDates.length,
     warnings,
   };

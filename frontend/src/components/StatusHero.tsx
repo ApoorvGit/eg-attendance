@@ -79,6 +79,22 @@ export function StatusHero({
           </p>
         </div>
       )}
+
+      {suggestion.bufferShortWindows.length > 0 && (
+        <div className="mt-4 rounded-lg border border-warn-border bg-warn-surface p-3">
+          <p className="flex items-start gap-2 text-sm text-warn">
+            <AlertIcon className="mt-0.5 size-4 shrink-0" />
+            <span>
+              <strong className="font-semibold">Your spare-day cushion can&apos;t be met</strong>{' '}
+              for {suggestion.bufferShortWindows.length} upcoming week
+              {suggestion.bufferShortWindows.length === 1 ? '' : 's'} — those weeks are already
+              booked to their limit, so raising the cushion above{' '}
+              {suggestion.planningTarget - 24} won&apos;t change them. They still meet the
+              required 24, but with no slack for a missed day.
+            </span>
+          </p>
+        </div>
+      )}
     </section>
   );
 }
