@@ -5,6 +5,8 @@ const DEFAULT_SETTINGS = {
   employmentStartDate: null as string | null,
   safetyBufferDays: 2,
   workDays: '1,2,3,4,5',
+  // 0 = Sunday. The company policy evaluates Sunday–Saturday weeks.
+  weekStartsOn: 0,
 };
 
 /** The singleton settings row is seeded by a migration, so this is normally a plain read.
@@ -38,6 +40,7 @@ export async function buildAttendanceInput(today: string): Promise<AttendanceInp
     blockedDates: blocked.map((b) => b.date),
     holidays: holidays.map((h) => h.date),
     workDays: settings.workDays.split(',').map(Number),
+    weekStartsOn: settings.weekStartsOn,
     employmentStartDate: settings.employmentStartDate ?? undefined,
   };
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeCompliance } from '../src/compliance.js';
-import { weekIndexOf, parseISO, formatISO, mondayOfWeekIndex } from '../src/dates.js';
+import { weekIndexOf, parseISO, formatISO, startOfWeekIndex } from '../src/dates.js';
 import { weekRecords, weekdayDate } from './helpers.js';
 import type { DayRecord } from '../src/types.js';
 
@@ -57,7 +57,7 @@ describe('computeCompliance', () => {
     // Log 5 office days *this week* (should be excluded) and would-be-future days.
     records.push(...weekRecords(CURRENT_WEEK, 5));
     const result = computeCompliance({ today: TODAY, records, blockedDates: [], holidays: [] });
-    expect(result.weeks.some((w) => w.weekKey === formatISO(mondayOfWeekIndex(CURRENT_WEEK)))).toBe(
+    expect(result.weeks.some((w) => w.weekKey === formatISO(startOfWeekIndex(CURRENT_WEEK)))).toBe(
       false,
     );
   });
@@ -77,7 +77,7 @@ describe('computeCompliance', () => {
     });
     expect(result.weeksConsidered).toBe(12);
     // week -1 should show 4 days (holiday excluded, not counted as absent-but-still-eligible)
-    const targetWeekKey = formatISO(mondayOfWeekIndex(wi));
+    const targetWeekKey = formatISO(startOfWeekIndex(wi));
     expect(result.weeks.find((w) => w.weekKey === targetWeekKey)?.days).toBe(4);
   });
 
@@ -109,7 +109,7 @@ describe('computeCompliance', () => {
       records,
       blockedDates: [],
       holidays: [],
-      employmentStartDate: formatISO(mondayOfWeekIndex(employmentStartWeek)),
+      employmentStartDate: formatISO(startOfWeekIndex(employmentStartWeek)),
     });
     expect(result.weeksConsidered).toBe(5);
     expect(result.warnings.some((w) => w.includes('less than'))).toBe(true);

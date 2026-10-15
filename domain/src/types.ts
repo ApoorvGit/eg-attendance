@@ -16,8 +16,13 @@ export interface AttendanceInput {
   blockedDates: ISODate[];
   /** Holidays / non-working days, past or future — removed entirely from eligible workdays. */
   holidays: ISODate[];
-  /** Weekdays considered eligible workdays. 0=Sun..6=Sat. Default Mon-Fri: [1,2,3,4,5]. */
+  /** Weekdays considered eligible workdays. 0=Sun..6=Sat. Default Mon-Fri: [1,2,3,4,5].
+   * Governs only which days the planner may *suggest* -- attendance is counted on any day
+   * you were logged in the office, workday or not (the policy counts any presence). */
   workDays?: number[];
+  /** The day each policy week begins. 0=Sun..6=Sat. Default 1 (Monday). The company policy
+   * uses Sunday–Saturday weeks, so the app sets 0. */
+  weekStartsOn?: number;
   /** If set, weeks before this date are excluded from the compliance window entirely
    * (not employed yet) rather than treated as data gaps. Use for employees with <12
    * weeks of tenure -- see compliance warnings for the ramp-up caveat. */

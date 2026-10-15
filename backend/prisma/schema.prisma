@@ -44,6 +44,7 @@ model Settings {
   employmentStartDate String? // ISO date; weeks before this are excluded from the window
   safetyBufferDays    Int     @default(2)
   workDays            String  @default("1,2,3,4,5") // 0=Sun..6=Sat
+  weekStartsOn        Int     @default(0) // day each policy week begins; 0=Sun (company uses Sun–Sat)
 
   @@map("settings")
 }

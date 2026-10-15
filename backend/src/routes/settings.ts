@@ -13,6 +13,7 @@ const PatchBody = z.object({
     .min(1)
     .max(7)
     .optional(),
+  weekStartsOn: z.number().int().min(0).max(6).optional(),
 });
 
 export async function settingsRoutes(app: FastifyInstance) {
@@ -31,6 +32,7 @@ export async function settingsRoutes(app: FastifyInstance) {
           body.employmentStartDate === undefined ? current.employmentStartDate : body.employmentStartDate,
         safetyBufferDays: body.safetyBufferDays ?? current.safetyBufferDays,
         workDays: body.workDays ? body.workDays.join(',') : current.workDays,
+        weekStartsOn: body.weekStartsOn ?? current.weekStartsOn,
       },
     });
     return reply.send({ ...updated, workDays: updated.workDays.split(',').map(Number) });

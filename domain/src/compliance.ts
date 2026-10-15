@@ -20,13 +20,14 @@ export function computeCompliance(
   const topK = options.topK ?? 8;
   const required = options.requiredDays ?? 24;
 
-  const currentWeekIndex = weekIndexOf(parseISO(input.today));
+  const weekStartsOn = input.weekStartsOn ?? 1;
+  const currentWeekIndex = weekIndexOf(parseISO(input.today), weekStartsOn);
   const windowEnd = currentWeekIndex - 1;
   const windowStart = windowEnd - windowWeeks + 1;
 
   const allWeeks = buildWeeks(input, windowStart, windowEnd);
   const employmentStartWeekIndex = input.employmentStartDate
-    ? weekIndexOf(parseISO(input.employmentStartDate))
+    ? weekIndexOf(parseISO(input.employmentStartDate), weekStartsOn)
     : -Infinity;
   const weeks = allWeeks.filter((w) => w.weekIndex >= employmentStartWeekIndex);
 

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { suggestOfficeDays } from '../src/suggest.js';
 import { computeCompliance } from '../src/compliance.js';
-import { weekIndexOf, parseISO, formatISO, mondayOfWeekIndex } from '../src/dates.js';
+import { weekIndexOf, parseISO, formatISO, startOfWeekIndex } from '../src/dates.js';
 import { weekRecords } from './helpers.js';
 import type { AttendanceInput, DayRecord } from '../src/types.js';
 
@@ -24,7 +24,7 @@ function verifyPlanIsCompliantForHorizon(
   ];
   const startT = opts.startT ?? CURRENT_WEEK + 1;
   for (let t = startT; t <= CURRENT_WEEK + horizonWeeksAhead; t++) {
-    const today = formatISO(mondayOfWeekIndex(t));
+    const today = formatISO(startOfWeekIndex(t));
     const result = computeCompliance({
       today,
       records: augmented,
@@ -75,7 +75,7 @@ describe('suggestOfficeDays', () => {
     const blockedDates: string[] = [];
     for (let i = 0; i < 8; i++) {
       const wi = CURRENT_WEEK + i;
-      blockedDates.push(formatISO(mondayOfWeekIndex(wi)));
+      blockedDates.push(formatISO(startOfWeekIndex(wi)));
     }
     const input: AttendanceInput = { today: TODAY, records: [], blockedDates, holidays: [] };
     const result = suggestOfficeDays(input);
@@ -96,7 +96,7 @@ describe('suggestOfficeDays', () => {
     const blockedDates: string[] = [];
     for (let i = 0; i < 12; i++) {
       const wi = CURRENT_WEEK + i;
-      const monday = mondayOfWeekIndex(wi);
+      const monday = startOfWeekIndex(wi);
       for (let d = 1; d <= 4; d++) blockedDates.push(formatISO(monday + d * 86400000));
     }
     const input: AttendanceInput = { today: TODAY, records: [], blockedDates, holidays: [] };
@@ -179,7 +179,7 @@ describe('suggestOfficeDays', () => {
       status: 'OFFICE' as const,
     }));
     for (let t = FULLY_CONTROLLABLE_T; t <= CURRENT_WEEK + 16; t++) {
-      const today = formatISO(mondayOfWeekIndex(t));
+      const today = formatISO(startOfWeekIndex(t));
       const compliance = computeCompliance({ today, records: augmented, blockedDates: [], holidays: [] });
       expect(compliance.top8Sum).toBeGreaterThanOrEqual(26);
     }

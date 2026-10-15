@@ -68,6 +68,7 @@ export interface SettingsPayload {
   employmentStartDate: string | null;
   safetyBufferDays: number;
   workDays: number[];
+  weekStartsOn: number;
 }
 
 export interface OverviewResponse {

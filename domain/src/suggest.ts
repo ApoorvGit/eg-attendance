@@ -1,4 +1,4 @@
-import { weekIndexOf, parseISO, mondayOfWeekIndex, formatISO } from './dates.js';
+import { weekIndexOf, parseISO, startOfWeekIndex, formatISO } from './dates.js';
 import { buildWeeks } from './aggregate.js';
 import type { AttendanceInput, SuggestionResult, WeekAgg } from './types.js';
 
@@ -51,7 +51,8 @@ export function suggestOfficeDays(
   const horizonWeeksAhead = options.horizonWeeksAhead ?? 36;
   const maxIterations = options.maxIterations ?? 5000;
 
-  const currentWeekIndex = weekIndexOf(parseISO(input.today));
+  const weekStartsOn = input.weekStartsOn ?? 1;
+  const currentWeekIndex = weekIndexOf(parseISO(input.today), weekStartsOn);
   const minWeekIndex = currentWeekIndex - windowWeeks + 1;
   const maxWeekIndex = currentWeekIndex + horizonWeeksAhead - 1;
 
@@ -158,10 +159,10 @@ export function suggestOfficeDays(
     feasible: unresolved.size === 0,
     unresolvedWindows: [...unresolved]
       .sort((a, b) => a - b)
-      .map((t) => formatISO(mondayOfWeekIndex(t))),
+      .map((t) => formatISO(startOfWeekIndex(t, weekStartsOn))),
     bufferShortWindows: [...bufferShort]
       .sort((a, b) => a - b)
-      .map((t) => formatISO(mondayOfWeekIndex(t))),
+      .map((t) => formatISO(startOfWeekIndex(t, weekStartsOn))),
     planningTarget,
     totalAddedDays: suggestedDates.length,
     warnings,

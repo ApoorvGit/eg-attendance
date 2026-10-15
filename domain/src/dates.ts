@@ -1,6 +1,6 @@
 export type ISODate = string;
 
-const EPOCH_MONDAY = Date.UTC(1970, 0, 5); // 1970-01-05 is a Monday
+const EPOCH = Date.UTC(1970, 0, 1); // 1970-01-01 (a Thursday)
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export function parseISO(date: ISODate): number {
@@ -25,29 +25,34 @@ export function weekdayOf(ms: number): number {
   return new Date(ms).getUTCDay();
 }
 
-/** Monday (00:00 UTC) of the ISO week containing `ms`. */
-export function mondayOf(ms: number): number {
-  const dow = weekdayOf(ms); // 0..6, Sun=0
-  const offsetFromMonday = (dow + 6) % 7; // Mon=0, Tue=1, ..., Sun=6
-  return addDays(ms, -offsetFromMonday);
+/**
+ * Start-of-week (00:00 UTC) of the week containing `ms`, for a week that begins on
+ * `weekStartsOn` (0=Sun .. 6=Sat). Default 1 (Monday). The company policy evaluates
+ * Sunday–Saturday weeks, so the app passes 0; the Monday default only keeps older
+ * callers and tests that predate the setting working unchanged.
+ */
+export function startOfWeek(ms: number, weekStartsOn = 1): number {
+  const offset = (weekdayOf(ms) - weekStartsOn + 7) % 7;
+  return addDays(ms, -offset);
 }
 
-export function weekKeyOf(ms: number): ISODate {
-  return formatISO(mondayOf(ms));
+export function weekKeyOf(ms: number, weekStartsOn = 1): ISODate {
+  return formatISO(startOfWeek(ms, weekStartsOn));
 }
 
-/** Sequential index of the ISO week containing `ms`, monotonically increasing with time. */
-export function weekIndexOf(ms: number): number {
-  return Math.round((mondayOf(ms) - EPOCH_MONDAY) / (7 * DAY_MS));
+/** Sequential index of the week containing `ms`, increasing with time. Only ever used for
+ * relative arithmetic, so the absolute origin is irrelevant as long as it is consistent. */
+export function weekIndexOf(ms: number, weekStartsOn = 1): number {
+  return Math.round((startOfWeek(ms, weekStartsOn) - startOfWeek(EPOCH, weekStartsOn)) / (7 * DAY_MS));
 }
 
-export function mondayOfWeekIndex(weekIndex: number): number {
-  return EPOCH_MONDAY + weekIndex * 7 * DAY_MS;
+export function startOfWeekIndex(weekIndex: number, weekStartsOn = 1): number {
+  return startOfWeek(EPOCH, weekStartsOn) + weekIndex * 7 * DAY_MS;
 }
 
-export function datesInWeek(weekIndex: number): ISODate[] {
-  const monday = mondayOfWeekIndex(weekIndex);
-  return Array.from({ length: 7 }, (_, i) => formatISO(addDays(monday, i)));
+export function datesInWeek(weekIndex: number, weekStartsOn = 1): ISODate[] {
+  const start = startOfWeekIndex(weekIndex, weekStartsOn);
+  return Array.from({ length: 7 }, (_, i) => formatISO(addDays(start, i)));
 }
 
 export function isSameOrBefore(a: ISODate, b: ISODate): boolean {

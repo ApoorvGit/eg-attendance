@@ -12,7 +12,7 @@ import {
   type SettingsPayload,
 } from '@/lib/api';
 import { computeCompliance, type AttendanceInput } from '@eg-attendance/domain';
-import { addDaysISO, mondayOfISO, todayLocalISO } from '@/lib/dates';
+import { addDaysISO, startOfWeekISO, todayLocalISO } from '@/lib/dates';
 import { buildWeek, type DayCell, type DayContext } from '@/lib/dayState';
 import { StatusHero } from './StatusHero';
 import { WeekStrip, type WeekProjection } from './WeekStrip';
@@ -164,13 +164,14 @@ export function Dashboard() {
       suggested: new Set(overview.suggestion.suggestedDates),
       holidays: new Set(holidays.map((h) => h.date)),
       workDays: settings.workDays,
+      weekStartsOn: settings.weekStartsOn,
     };
   }, [overview, settings, attendance, blocked, holidays, today]);
 
   const weeks = useMemo(() => {
     if (!ctx) return null;
-    const thisMonday = mondayOfISO(today);
-    const at = (offset: number) => buildWeek(addDaysISO(thisMonday, offset * 7), ctx);
+    const thisStart = startOfWeekISO(today, ctx.weekStartsOn);
+    const at = (offset: number) => buildWeek(addDaysISO(thisStart, offset * 7), ctx);
     return {
       current: at(0),
       next: at(1),
@@ -191,10 +192,11 @@ export function Dashboard() {
       blockedDates: blocked.map((b) => b.date),
       holidays: holidays.map((h) => h.date),
       workDays: settings.workDays,
+      weekStartsOn: settings.weekStartsOn,
       employmentStartDate: settings.employmentStartDate ?? undefined,
     };
-    return (mondayISO: string): WeekProjection => {
-      const c = computeCompliance({ ...input, today: mondayISO });
+    return (weekStartISO: string): WeekProjection => {
+      const c = computeCompliance({ ...input, today: weekStartISO });
       return { count: c.top8Sum, required: c.required };
     };
   }, [settings, attendance, blocked, holidays, today]);
@@ -240,12 +242,12 @@ export function Dashboard() {
       <WeekStrip
         week={weeks.current}
         onDayTap={onDayTap}
-        projection={projectionFor?.(weeks.current.mondayISO)}
+        projection={projectionFor?.(weeks.current.startISO)}
       />
       <WeekStrip
         week={weeks.next}
         onDayTap={onDayTap}
-        projection={projectionFor?.(weeks.next.mondayISO)}
+        projection={projectionFor?.(weeks.next.startISO)}
       />
 
       <p className="mb-6 text-xs text-muted-foreground">
@@ -262,10 +264,10 @@ export function Dashboard() {
       >
         {weeks.later.map((w) => (
           <WeekStrip
-            key={w.mondayISO}
+            key={w.startISO}
             week={w}
             onDayTap={onDayTap}
-            projection={projectionFor?.(w.mondayISO)}
+            projection={projectionFor?.(w.startISO)}
           />
         ))}
       </Disclosure>
@@ -275,7 +277,7 @@ export function Dashboard() {
         hint={unloggedEarlier > 0 ? `${unloggedEarlier} days not logged` : 'all logged'}
       >
         {weeks.earlier.map((w) => (
-          <WeekStrip key={w.mondayISO} week={w} onDayTap={onDayTap} />
+          <WeekStrip key={w.startISO} week={w} onDayTap={onDayTap} />
         ))}
       </Disclosure>
 

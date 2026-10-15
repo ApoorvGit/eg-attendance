@@ -1,4 +1,4 @@
-import { datesInWeek, weekIndexOf, weekKeyOf, parseISO } from './dates.js';
+import { datesInWeek, weekIndexOf, weekKeyOf, startOfWeekIndex, parseISO } from './dates.js';
 import type { AttendanceInput, WeekAgg } from './types.js';
 
 const DEFAULT_WORK_DAYS = [1, 2, 3, 4, 5]; // Mon-Fri
@@ -12,22 +12,30 @@ export function buildWeeks(
   fromWeekIndex: number,
   toWeekIndex: number,
 ): WeekAgg[] {
+  const weekStartsOn = input.weekStartsOn ?? 1;
   const workDays = new Set(input.workDays ?? DEFAULT_WORK_DAYS);
   const holidays = new Set(input.holidays);
   const recordByDate = new Map(input.records.map((r) => [r.date, r.status]));
   const blocked = new Set(input.blockedDates);
 
   const todayMs = parseISO(input.today);
-  const currentWeekIndex = weekIndexOf(todayMs);
+  const currentWeekIndex = weekIndexOf(todayMs, weekStartsOn);
 
   const weeks: WeekAgg[] = [];
   for (let wi = fromWeekIndex; wi <= toWeekIndex; wi++) {
-    const allDates = datesInWeek(wi);
+    const allDates = datesInWeek(wi, weekStartsOn);
+    // Eligible days drive *planning* only: which days may be suggested, and which unlogged
+    // past days count as gaps. They are the configured workdays, minus holidays.
     const eligibleDates = allDates.filter(
       (d) => workDays.has(new Date(parseISO(d)).getUTCDay()) && !holidays.has(d),
     );
 
-    const officeDates: string[] = [];
+    // Office attendance is counted on ANY day in the week, not just eligible workdays: the
+    // policy counts any day you were in the office, so a weekend or holiday badge-in counts
+    // too. (This is what the company portal does; filtering by workday here silently dropped
+    // such days and undercounted.)
+    const officeDates = allDates.filter((d) => recordByDate.get(d) === 'OFFICE');
+
     const absentDates: string[] = [];
     const blockedDates: string[] = [];
     const openDates: string[] = [];
@@ -37,7 +45,7 @@ export function buildWeeks(
       const status = recordByDate.get(d);
       const isFuture = parseISO(d) > todayMs;
       if (status === 'OFFICE') {
-        officeDates.push(d);
+        // already counted in officeDates
       } else if (status === 'ABSENT') {
         absentDates.push(d);
       } else if (isFuture && blocked.has(d)) {
@@ -54,7 +62,7 @@ export function buildWeeks(
 
     weeks.push({
       weekIndex: wi,
-      weekKey: weekKeyOf(datesInWeekMs(wi)),
+      weekKey: weekKeyOf(startOfWeekIndex(wi, weekStartsOn), weekStartsOn),
       eligibleDates,
       officeDates,
       absentDates,
@@ -68,8 +76,4 @@ export function buildWeeks(
     });
   }
   return weeks;
-}
-
-function datesInWeekMs(weekIndex: number): number {
-  return parseISO(datesInWeek(weekIndex)[0]);
 }

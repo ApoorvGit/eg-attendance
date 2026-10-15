@@ -1,4 +1,4 @@
-import { addDaysISO, mondayOfISO } from './dates';
+import { addDaysISO, startOfWeekISO } from './dates';
 
 /**
  * A day is in exactly one of these states. The whole UI -- colour, label, icon,
@@ -22,7 +22,7 @@ export interface DayCell {
 }
 
 export interface WeekView {
-  mondayISO: string;
+  startISO: string; // first day of the week (depends on weekStartsOn)
   label: string;
   days: DayCell[];
   /** upcoming office days still required this week */
@@ -41,6 +41,8 @@ export interface DayContext {
   holidays: Set<string>;
   /** 0=Sun..6=Sat */
   workDays: number[];
+  /** day each week begins, 0=Sun..6=Sat */
+  weekStartsOn: number;
 }
 
 function weekdayOf(iso: string): number {
@@ -59,14 +61,17 @@ export function dayKind(date: string, ctx: DayContext): DayKind {
   return 'free';
 }
 
-export function buildWeek(mondayISO: string, ctx: DayContext): WeekView {
+export function buildWeek(startISO: string, ctx: DayContext): WeekView {
   const workDays = new Set(ctx.workDays);
   const days: DayCell[] = [];
 
   for (let i = 0; i < 7; i++) {
-    const date = addDaysISO(mondayISO, i);
-    if (!workDays.has(weekdayOf(date))) continue;
-    if (ctx.holidays.has(date)) continue; // holidays aren't eligible, so they aren't shown
+    const date = addDaysISO(startISO, i);
+    const isWorkday = workDays.has(weekdayOf(date)) && !ctx.holidays.has(date);
+    // Show every eligible workday, plus any other day that actually has a logged record --
+    // so a weekend or holiday office day (which counts toward the policy) is still visible
+    // and correctable, rather than silently missing from the strip.
+    if (!isWorkday && !ctx.attendance.has(date)) continue;
     days.push({
       date,
       kind: dayKind(date, ctx),
@@ -75,25 +80,27 @@ export function buildWeek(mondayISO: string, ctx: DayContext): WeekView {
     });
   }
 
-  const thisMonday = mondayOfISO(ctx.today);
+  const thisStart = startOfWeekISO(ctx.today, ctx.weekStartsOn);
   return {
-    mondayISO,
-    label: weekLabel(mondayISO, thisMonday),
+    startISO,
+    label: weekLabel(startISO, thisStart, days),
     days,
     goInCount: days.filter((d) => d.kind === 'suggested').length,
     officeCount: days.filter((d) => d.kind === 'office').length,
-    isCurrent: mondayISO === thisMonday,
-    isPast: mondayISO < thisMonday,
+    isCurrent: startISO === thisStart,
+    isPast: startISO < thisStart,
   };
 }
 
-function weekLabel(mondayISO: string, thisMondayISO: string): string {
-  if (mondayISO === thisMondayISO) return 'This week';
-  if (mondayISO === addDaysISO(thisMondayISO, 7)) return 'Next week';
-  if (mondayISO === addDaysISO(thisMondayISO, -7)) return 'Last week';
-  const [, m, d] = mondayISO.split('-').map(Number);
-  const end = addDaysISO(mondayISO, 4);
-  const [, em, ed] = end.split('-').map(Number);
+function weekLabel(startISO: string, thisStartISO: string, days: DayCell[]): string {
+  if (startISO === thisStartISO) return 'This week';
+  if (startISO === addDaysISO(thisStartISO, 7)) return 'Next week';
+  if (startISO === addDaysISO(thisStartISO, -7)) return 'Last week';
+  // Range of the days actually shown (typically Mon–Fri), not the raw week bounds.
+  const first = days[0]?.date ?? startISO;
+  const last = days[days.length - 1]?.date ?? addDaysISO(startISO, 6);
+  const [, m, d] = first.split('-').map(Number);
+  const [, em, ed] = last.split('-').map(Number);
   const month = (n: number) =>
     new Date(2000, n - 1, 1).toLocaleDateString(undefined, { month: 'short' });
   return m === em ? `${month(m)} ${d}–${ed}` : `${month(m)} ${d} – ${month(em)} ${ed}`;
