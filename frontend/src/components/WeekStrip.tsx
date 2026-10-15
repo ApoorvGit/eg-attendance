@@ -33,31 +33,61 @@ function actionHint(day: DayCell): string {
   return day.kind === 'blocked' ? "mark as available again" : "mark as can't go in";
 }
 
+/** The policy count as it would be evaluated at this week: best 8 of the 12 completed
+ * weeks before it (the window always excludes the week being evaluated), counting only
+ * logged office days, against the required total. Shown as `count/required`, e.g. 28/24. */
+export interface WeekProjection {
+  count: number;
+  required: number;
+}
+
+function ProjectionBadge({ count, required }: WeekProjection) {
+  const tone =
+    count < required
+      ? 'bg-danger-surface text-danger'
+      : count === required
+        ? 'bg-warn-surface text-warn'
+        : 'bg-ok-surface text-ok';
+  return (
+    <span
+      title={`Policy count as of this week: your best 8 of the 12 weeks before it (this week excluded), counting only logged office days, vs the required ${required}.`}
+      className={`rounded-md px-1.5 py-0.5 text-xs font-semibold tabular-nums ${tone}`}
+    >
+      {count}/{required}
+    </span>
+  );
+}
+
 export function WeekStrip({
   week,
   onDayTap,
+  projection,
 }: {
   week: WeekView;
   onDayTap: (day: DayCell) => void;
+  projection?: WeekProjection;
 }) {
   return (
     <section className="mb-6">
       <header className="mb-2 flex items-baseline justify-between gap-2">
         <h2 className="text-sm font-semibold">{week.label}</h2>
-        <p className="text-xs text-muted-foreground">
-          {week.goInCount > 0 ? (
-            <>
-              go in{' '}
-              <span className="font-semibold text-foreground">
-                {week.goInCount} {week.goInCount === 1 ? 'day' : 'days'}
-              </span>
-            </>
-          ) : week.officeCount > 0 ? (
-            <>{week.officeCount} in the office</>
-          ) : (
-            <>nothing needed</>
-          )}
-        </p>
+        <div className="flex items-baseline gap-2">
+          <p className="text-xs text-muted-foreground">
+            {week.goInCount > 0 ? (
+              <>
+                go in{' '}
+                <span className="font-semibold text-foreground">
+                  {week.goInCount} {week.goInCount === 1 ? 'day' : 'days'}
+                </span>
+              </>
+            ) : week.officeCount > 0 ? (
+              <>{week.officeCount} in the office</>
+            ) : (
+              <>nothing needed</>
+            )}
+          </p>
+          {projection && <ProjectionBadge {...projection} />}
+        </div>
       </header>
 
       <div className="grid grid-cols-5 gap-1.5">

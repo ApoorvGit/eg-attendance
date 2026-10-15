@@ -11,10 +11,11 @@ import {
   type OverviewResponse,
   type SettingsPayload,
 } from '@/lib/api';
+import { computeCompliance, type AttendanceInput } from '@eg-attendance/domain';
 import { addDaysISO, mondayOfISO, todayLocalISO } from '@/lib/dates';
 import { buildWeek, type DayCell, type DayContext } from '@/lib/dayState';
 import { StatusHero } from './StatusHero';
-import { WeekStrip } from './WeekStrip';
+import { WeekStrip, type WeekProjection } from './WeekStrip';
 import { Disclosure } from './Disclosure';
 import { HistoryStrip } from './HistoryStrip';
 import { SettingsSheet } from './SettingsSheet';
@@ -178,6 +179,26 @@ export function Dashboard() {
     };
   }, [ctx, today]);
 
+  /** The policy count projected for each current/future week, using the same domain
+   * function the backend runs -- so the current week's badge matches the hero exactly, and
+   * future weeks show how the count erodes as strong weeks age out of the rolling window if
+   * nothing more is logged. Only logged office days count; suggested days are not assumed. */
+  const projectionFor = useMemo(() => {
+    if (!settings) return null;
+    const input: AttendanceInput = {
+      today,
+      records: attendance.map((r) => ({ date: r.date, status: r.status })),
+      blockedDates: blocked.map((b) => b.date),
+      holidays: holidays.map((h) => h.date),
+      workDays: settings.workDays,
+      employmentStartDate: settings.employmentStartDate ?? undefined,
+    };
+    return (mondayISO: string): WeekProjection => {
+      const c = computeCompliance({ ...input, today: mondayISO });
+      return { count: c.top8Sum, required: c.required };
+    };
+  }, [settings, attendance, blocked, holidays, today]);
+
   if (error) {
     return (
       <main className="mx-auto max-w-md px-6 py-24 text-center">
@@ -216,12 +237,23 @@ export function Dashboard() {
         syncing={syncing}
       />
 
-      <WeekStrip week={weeks.current} onDayTap={onDayTap} />
-      <WeekStrip week={weeks.next} onDayTap={onDayTap} />
+      <WeekStrip
+        week={weeks.current}
+        onDayTap={onDayTap}
+        projection={projectionFor?.(weeks.current.mondayISO)}
+      />
+      <WeekStrip
+        week={weeks.next}
+        onDayTap={onDayTap}
+        projection={projectionFor?.(weeks.next.mondayISO)}
+      />
 
       <p className="mb-6 text-xs text-muted-foreground">
         Tap any day to change it. Past days record whether you went in; future days let you mark
-        when you can&apos;t.
+        when you can&apos;t. The{' '}
+        <span className="font-medium text-foreground">{overview.compliance.top8Sum}/24</span> on
+        each week is your policy count as of that week — best 8 of the 12 weeks before it — counting
+        only days you&apos;ve logged, so it shows how the count holds up if you log nothing more.
       </p>
 
       <Disclosure
@@ -229,7 +261,12 @@ export function Dashboard() {
         hint={laterGoIn > 0 ? `${laterGoIn} more days planned` : 'nothing planned'}
       >
         {weeks.later.map((w) => (
-          <WeekStrip key={w.mondayISO} week={w} onDayTap={onDayTap} />
+          <WeekStrip
+            key={w.mondayISO}
+            week={w}
+            onDayTap={onDayTap}
+            projection={projectionFor?.(w.mondayISO)}
+          />
         ))}
       </Disclosure>
 
